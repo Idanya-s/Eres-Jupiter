@@ -74,7 +74,7 @@ export function SpaceCanvas({
     ctx.scale(dpr, dpr);
 
     // Initialize decorative background stars (stardust) once or dynamically
-    const bgStarsCount = Math.floor((dimensions.width * dimensions.height) / 3000);
+    const bgStarsCount = Math.floor((dimensions.width * dimensions.height) / 5000);
     const bgStars: { x: number; y: number; size: number; alpha: number; speed: number }[] = [];
     for (let i = 0; i < bgStarsCount; i++) {
       bgStars.push({
@@ -171,16 +171,18 @@ export function SpaceCanvas({
           ctx.stroke();
           ctx.setLineDash([]); // reset
 
-          // Draw orbital telemetry labels
-          ctx.font = '9px "JetBrains Mono", monospace';
-          ctx.fillStyle = isSelected ? '#ff8787' : 'rgba(255, 255, 255, 0.6)';
-          const speedLabel = `v = ${(gravitySpeedMod * 1000).toFixed(1)} km/s`;
-          const distLabel = `r = ${(star.distance * 10).toFixed(0)} AU`;
-          ctx.fillText(`${speedLabel} | ${distLabel}`, sx + 15, sy - 5);
+          // Draw orbital telemetry labels (only on larger screens)
+          if (Math.min(dimensions.width, dimensions.height) > 500) {
+            ctx.font = '9px "JetBrains Mono", monospace';
+            ctx.fillStyle = isSelected ? '#ff8787' : 'rgba(255, 255, 255, 0.6)';
+            const speedLabel = `v = ${(gravitySpeedMod * 1000).toFixed(1)} km/s`;
+            const distLabel = `r = ${(star.distance * 10).toFixed(0)} AU`;
+            ctx.fillText(`${speedLabel} | ${distLabel}`, sx + 15, sy - 5);
+          }
         }
 
-        // Star pulsing effect - scale size on small screens for easier tapping
-        const sizeScale = Math.min(1, Math.min(dimensions.width, dimensions.height) / 500) * 1.5 + 0.5;
+        // Star pulsing effect - bigger on mobile for easier tapping
+        const sizeScale = Math.max(1, 1.6 - Math.min(dimensions.width, dimensions.height) / 800);
         const pulse = 1 + Math.sin(Date.now() * 0.005 + star.distance) * 0.15;
         const renderSize = star.size * sizeScale * pulse * (isHovered ? 1.4 : 1.0) * (isSelected ? 1.6 : 1.0);
 
@@ -244,7 +246,7 @@ export function SpaceCanvas({
       // -----------------------------------------------------------------
       // DRAW JUPITER (THE CENTRAL MASSIVE BODY)
       // -----------------------------------------------------------------
-      const jupiterRadius = Math.max(35, Math.min(65, Math.min(dimensions.width, dimensions.height) * 0.12));
+      const jupiterRadius = Math.max(28, Math.min(65, Math.min(dimensions.width, dimensions.height) * 0.1));
       
       // Outer gravity distortion waves
       const pulseWave = (Math.sin(Date.now() * 0.001) + 1) / 2;
@@ -421,7 +423,7 @@ export function SpaceCanvas({
     const cx = dimensions.width / 2;
     const cy = dimensions.height / 2;
     let closestStar: DedicationStar | null = null;
-    let closestDist = 50; // Touch is less precise, bigger radius
+    let closestDist = 65; // Touch is less precise, bigger radius
     const scale = distanceScaleRef.current;
 
     starsStateRef.current.forEach((star) => {
