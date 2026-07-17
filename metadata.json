@@ -1,0 +1,6 @@
+{
+  "name": "Atracción Cósmica",
+  "description": "Una experiencia galáctica interactiva inspirada en la gravedad de Júpiter para celebrar un cumpleaños romántico y especial el 17 de Julio.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
