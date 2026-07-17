@@ -27,6 +27,7 @@ export function SpaceCanvas({
   const jupiterRotationRef = useRef(0);
   const animationFrameId = useRef<number | null>(null);
   const mousePosRef = useRef({ x: 0, y: 0 });
+  const distanceScaleRef = useRef(1);
 
   // Update internal stars state when prop changes, retaining angles
   useEffect(() => {
@@ -88,6 +89,12 @@ export function SpaceCanvas({
     const cx = dimensions.width / 2;
     const cy = dimensions.height / 2;
 
+    // Scale star distances to fit canvas size
+    const maxRawDistance = Math.max(...stars.map(s => s.distance), 1);
+    const maxFitRadius = Math.min(cx, cy) * 0.82;
+    const distanceScale = maxFitRadius / maxRawDistance;
+    distanceScaleRef.current = distanceScale;
+
     const render = () => {
       // Clear with soft space tail to allow beautiful movement trails
       ctx.fillStyle = 'rgba(5, 5, 16, 0.25)'; // #050510 background tail matching the Artistic Flair theme
@@ -116,7 +123,7 @@ export function SpaceCanvas({
         ctx.lineWidth = selectedStarId === star.id ? 1.5 : 1;
         ctx.beginPath();
         ctx.setLineDash([4, 12]);
-        ctx.arc(cx, cy, star.distance, 0, Math.PI * 2);
+        ctx.arc(cx, cy, star.distance * distanceScale, 0, Math.PI * 2);
         ctx.stroke();
       });
       ctx.setLineDash([]); // reset
@@ -136,8 +143,9 @@ export function SpaceCanvas({
           star.angle -= Math.PI * 2;
         }
 
-        const sx = cx + Math.cos(star.angle) * star.distance;
-        const sy = cy + Math.sin(star.angle) * star.distance;
+        const scaledDistance = star.distance * distanceScale;
+        const sx = cx + Math.cos(star.angle) * scaledDistance;
+        const sy = cy + Math.sin(star.angle) * scaledDistance;
 
         // Mouse hover test
         const dx = mousePosRef.current.x - sx;
@@ -171,9 +179,10 @@ export function SpaceCanvas({
           ctx.fillText(`${speedLabel} | ${distLabel}`, sx + 15, sy - 5);
         }
 
-        // Star pulsing effect
+        // Star pulsing effect - scale size on small screens for easier tapping
+        const sizeScale = Math.min(1, Math.min(dimensions.width, dimensions.height) / 500) * 1.5 + 0.5;
         const pulse = 1 + Math.sin(Date.now() * 0.005 + star.distance) * 0.15;
-        const renderSize = star.size * pulse * (isHovered ? 1.4 : 1.0) * (isSelected ? 1.6 : 1.0);
+        const renderSize = star.size * sizeScale * pulse * (isHovered ? 1.4 : 1.0) * (isSelected ? 1.6 : 1.0);
 
         // Draw Star Glow
         const gradient = ctx.createRadialGradient(sx, sy, 0, sx, sy, renderSize * 3);
@@ -412,11 +421,12 @@ export function SpaceCanvas({
     const cx = dimensions.width / 2;
     const cy = dimensions.height / 2;
     let closestStar: DedicationStar | null = null;
-    let closestDist = 40; // Touch is less precise, bigger radius
+    let closestDist = 50; // Touch is less precise, bigger radius
+    const scale = distanceScaleRef.current;
 
     starsStateRef.current.forEach((star) => {
-      const sx = cx + Math.cos(star.angle) * star.distance;
-      const sy = cy + Math.sin(star.angle) * star.distance;
+      const sx = cx + Math.cos(star.angle) * star.distance * scale;
+      const sy = cy + Math.sin(star.angle) * star.distance * scale;
       const dx = touchX - sx;
       const dy = touchY - sy;
       const dist = Math.sqrt(dx * dx + dy * dy);
