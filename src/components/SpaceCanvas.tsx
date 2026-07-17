@@ -399,11 +399,46 @@ export function SpaceCanvas({
     }
   };
 
+  // Handle Touch for mobile
+  const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas || !e.touches[0]) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const touchX = e.touches[0].clientX - rect.left;
+    const touchY = e.touches[0].clientY - rect.top;
+
+    // Find closest star
+    const cx = dimensions.width / 2;
+    const cy = dimensions.height / 2;
+    let closestStar: DedicationStar | null = null;
+    let closestDist = 40; // Touch is less precise, bigger radius
+
+    starsStateRef.current.forEach((star) => {
+      const sx = cx + Math.cos(star.angle) * star.distance;
+      const sy = cy + Math.sin(star.angle) * star.distance;
+      const dx = touchX - sx;
+      const dy = touchY - sy;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < closestDist) {
+        closestDist = dist;
+        closestStar = star;
+      }
+    });
+
+    if (closestStar) {
+      onStarHover(closestStar);
+      onStarSelect(closestStar);
+    } else {
+      onStarSelect(null);
+    }
+  };
+
   return (
     <div 
       id="space-canvas-container"
       ref={containerRef} 
-      className="relative w-full h-[500px] md:h-[650px] bg-[#050510] rounded-[24px] overflow-hidden border border-white/10 select-none cursor-crosshair shadow-2xl shadow-black/50"
+      className="relative w-full h-[400px] md:h-[650px] bg-[#050510] rounded-[24px] overflow-hidden border border-white/10 select-none cursor-crosshair shadow-2xl shadow-black/50"
     >
       {/* Background Deep Space Purple Blur Dust */}
       <div className="absolute top-1/4 left-1/4 w-80 h-80 bg-purple-900/10 rounded-full nebula-glow"></div>
@@ -415,16 +450,17 @@ export function SpaceCanvas({
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
         onClick={handleCanvasClick}
+        onTouchStart={handleTouchStart}
         className="w-full h-full block"
       />
 
       {/* Orbit System Instructions Overlay */}
-      <div className="absolute bottom-4 left-4 right-4 pointer-events-none flex flex-col sm:flex-row sm:items-center sm:justify-between text-[11px] font-mono text-purple-300/60 bg-black/40 backdrop-blur-md px-3 py-2 rounded-lg border border-purple-900/30 gap-1.5">
-        <div className="flex items-center gap-1.5">
-          <span className="inline-block w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+      <div className="absolute bottom-2 md:bottom-4 left-2 md:left-4 right-2 md:right-4 pointer-events-none flex flex-col sm:flex-row sm:items-center sm:justify-between text-[9px] md:text-[11px] font-mono text-purple-300/60 bg-black/40 backdrop-blur-md px-2 md:px-3 py-1.5 md:py-2 rounded-lg border border-purple-900/30 gap-1">
+        <div className="flex items-center gap-1 md:gap-1.5">
+          <span className="inline-block w-1.5 md:w-2 h-1.5 md:h-2 rounded-full bg-amber-500 animate-ping"></span>
           <span>ESTADO: ÓRBITAS SENSORIZADAS</span>
         </div>
-        <span className="text-right">★ HAZ CLIC EN CUALQUIER ESTRELLA PARA LEER SU DEDICATORIA</span>
+        <span className="text-right">★ TOCA UNA ESTRELLA PARA LEER SU DEDICATORIA</span>
       </div>
     </div>
   );
